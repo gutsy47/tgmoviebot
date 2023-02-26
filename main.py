@@ -4,6 +4,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.types import ChatActions
 
 import botkeyboards as bk
 from dbspread import Service
@@ -51,31 +52,17 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     await message.reply("Действие отменено", reply_markup=bk.rk_main)
 
 
-# SETTINGS START
-@dp.message_handler(commands=['settings'])
-async def send_settings(message: types.Message):
-    """Bot settings. The only command that requires interaction"""
-    await message.reply(
-        "⚙ <b>Настройки:</b>\n"
-        "<b>Шаблон</b> - Настройки шаблона поста\n"
-        "<b>Время</b> - Настройка времени отправки поста(ов)\n"
-        "<b>Количество</b> - Настройка количества отправляемых постов",
-        parse_mode="HTML",
-        reply_markup=bk.ik_settings,
-    )
-
-
-# SETTINGS-TEMPLATE START
-@dp.callback_query_handler(lambda c: c.data == "template")
-async def send_template(callback_query: types.CallbackQuery):
+# TEMPLATE SETTINGS START
+@dp.message_handler(commands=['template'])
+@dp.message_handler(Text(equals="⚙️ Шаблон поста"))
+async def send_template(message: types.Message):
+    await message.answer_chat_action(ChatActions.TYPING)
     template = service.get_post_template()
-    await bot.send_message(
-        callback_query.from_user.id,
+    await message.reply(
         template,
         parse_mode="HTML",
         reply_markup=bk.ik_template
     )
-    await bot.answer_callback_query(callback_query.id)
 
 
 @dp.callback_query_handler(lambda c: c.data == "updTemplate")
@@ -103,6 +90,7 @@ async def process_template_invalid(message: types.Message):
 
 @dp.message_handler(lambda message: all(key in message.text for key in keywords), state=TemplateForm.template)
 async def process_template(message: types.Message, state: FSMContext):
+    await message.answer_chat_action(ChatActions.TYPING)
     await state.finish()
     service.update_post_template(message.html_text)
     await message.reply(
@@ -112,22 +100,7 @@ async def process_template(message: types.Message, state: FSMContext):
     )
 
 
-# SETTINGS-TEMPLATE END
-
-
-@dp.callback_query_handler(lambda c: c.data == "time")
-async def send_time(callback_query: types.CallbackQuery):
-    await bot.send_message(callback_query.from_user.id, "Soon")
-    await bot.answer_callback_query(callback_query.id)
-
-
-@dp.callback_query_handler(lambda c: c.data == "amount")
-async def send_amount(callback_query: types.CallbackQuery):
-    await bot.send_message(callback_query.from_user.id, "Soon")
-    await bot.answer_callback_query(callback_query.id)
-
-
-# SETTINGS END
+# TEMPLATE SETTINGS END
 
 
 if __name__ == "__main__":
