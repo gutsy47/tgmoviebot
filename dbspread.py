@@ -36,12 +36,20 @@ class Service:
             if not row[0]:
                 break
 
+            score = float(row[4].replace(',', '.'))
+            if score >= 7:
+                score = "🟢 " + str(score)
+            elif score >= 5:
+                score = "🟠 " + str(score)
+            else:
+                score = "🔴 " + str(score)
+
             self.__movies.append({
                 "name": row[0],
                 "isPosted": True if row[1] == "TRUE" else False,
                 "year": row[2],
                 "time": row[3],
-                "score": row[4].replace(',', '.'),
+                "score": score,
                 "genres": [('#' + genre) for genre in row[5].replace(' ', '').split(',')],
                 "description": row[6]
             })
