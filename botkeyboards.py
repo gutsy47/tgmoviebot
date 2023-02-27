@@ -23,9 +23,9 @@ ik_posts_amount.add(
     ik.InlineKeyboardButton('3', callback_data="3Post"),
 )
 
+ik_set_posted = [ik.InlineKeyboardMarkup(row_width=1) for _ in range(3)]
+for i in range(3):
+    ik_set_posted[i].add(ik.InlineKeyboardButton(f"📌 Пометить как \"Выложен\"", callback_data=f"{i+1}Posted"))
 
-def get_ik_is_posted(amount: int = 1):
-    keyboard = ik.InlineKeyboardMarkup(row_width=3)
-    for i in range(1, amount+1):
-        keyboard.insert(ik.InlineKeyboardButton(f"✅ {i}", callback_data=f"{i}posted"))
-    return keyboard
+ik_posted = ik.InlineKeyboardMarkup(row_width=1)
+ik_posted.add(ik.InlineKeyboardButton("✅ Выложен", callback_data="Pass"))

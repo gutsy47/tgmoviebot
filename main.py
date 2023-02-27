@@ -33,8 +33,9 @@ async def send_welcome(message: types.Message):
     """Welcome message when the bot starts"""
     await message.reply(
         "<b>Hello, world!</b>\n"
-        "Я тут за главного в свопе. Пока ничего нет, жди обновлений\n"
-        "<i>In progress:</i> Настройка шаблона",
+        "Я тут за главного в свопе. Команды две:\n"
+        "⚙️ Шаблон поста - Посмотреть/изменить текущий шаблон поста\n"
+        "🖌 Получить пост(ы) - Из GТаблицы бот сформирует тебе 1-3 поста (если в бд есть данные)",
         parse_mode="HTML",
         reply_markup=bk.rk_main
     )
@@ -79,29 +80,34 @@ async def get_not_posted_amount(message: types.Message):
 async def send_posts(callback_query: types.CallbackQuery):
     amount = int(callback_query.data[0])
     posts = service.get_post_message(amount)
-    for post in posts:
+    for i in range(len(posts)):
         await bot.send_message(
             callback_query.from_user.id,
-            post,
+            posts[i],
             parse_mode="HTML",
+            reply_markup=bk.ik_set_posted[i]
         )
     await bot.answer_callback_query(callback_query.id)
     await bot.send_message(
         callback_query.from_user.id,
-        "Нажми кнопку, соответствующую номеру поста, если выложишь его",
-        reply_markup=bk.get_ik_is_posted(amount)
+        "Нажми кнопку под постом, если выложишь его",
     )
 
 
-@dp.callback_query_handler(lambda c: c.data in ["1posted", "2posted", "3posted"])
+@dp.callback_query_handler(lambda c: c.data in ["1Posted", "2Posted", "3Posted"])
 async def post_sent(callback_query: types.CallbackQuery):
     movie_index = int(callback_query.data[0])
-    movie_name = service.update_movie_status(movie_index=movie_index, is_posted=True)
-    await bot.send_message(
-        callback_query.from_user.id,
-        f"Фильм <b>{movie_name}</b> был помечен как <i>выложенный</i>",
-        parse_mode="HTML"
+    service.update_movie_status(movie_index=movie_index, is_posted=True)
+    await bot.answer_callback_query(callback_query.id)
+    await bot.edit_message_reply_markup(
+        chat_id=callback_query.from_user.id,
+        message_id=callback_query.message.message_id,
+        reply_markup=bk.ik_posted
     )
+
+
+@dp.callback_query_handler(lambda c: c.data == "Pass")
+async def pass_callback_query(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
 
 
