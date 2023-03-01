@@ -35,7 +35,7 @@ async def send_welcome(message: types.Message):
         "<b>Hello, world!</b>\n"
         "Я тут за главного в свопе. Команды две:\n"
         "⚙️ Шаблон поста - Посмотреть/изменить текущий шаблон поста\n"
-        "🖌 Получить пост(ы) - Из GТаблицы бот сформирует тебе 1-3 поста (если в бд есть данные)",
+        "🖌 Получить пост  - Из GТаблицы бот сформирует пост (если в бд есть данные)",
         parse_mode="HTML",
         reply_markup=bk.rk_main
     )
@@ -64,45 +64,48 @@ async def cancel_handler(message: types.Message, state: FSMContext):
 
 # GET POST START
 @dp.message_handler(commands=['get_post'])
-@dp.message_handler(Text(equals="🖌 Получить пост(ы)"))
-async def get_not_posted_amount(message: types.Message):
+@dp.message_handler(Text(equals="🖌 Получить пост"))
+async def get_post(message: types.Message):
     await message.answer_chat_action(ChatActions.TYPING)
     amount = service.get_post_amount(is_posted=False)
+    post = service.get_post_message(index=0)
     await message.reply(
-        f"<b>Не выложенных постов:</b> {amount}\n"
-        "Сколько постов мне отправить?",
+        f"<b>Не выложенных постов:</b> {amount}",
         parse_mode="HTML",
-        reply_markup=bk.ik_posts_amount
+    )
+    await message.answer(
+        post,
+        parse_mode="HTML",
+        reply_markup=bk.get_ik_post(index=0)
     )
 
 
-@dp.callback_query_handler(lambda c: c.data in ["1Post", "2Post", "3Post"])
-async def send_posts(callback_query: types.CallbackQuery):
-    amount = int(callback_query.data[0])
-    posts = service.get_post_message(amount)
-    for i in range(len(posts)):
-        await bot.send_message(
-            callback_query.from_user.id,
-            posts[i],
-            parse_mode="HTML",
-            reply_markup=bk.ik_set_posted[i]
-        )
-    await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(
-        callback_query.from_user.id,
-        "Нажми кнопку под постом, если выложишь его",
+@dp.callback_query_handler(lambda c: "newPost" in c.data)
+async def change_post(callback_query: types.CallbackQuery):
+    index = int(callback_query.data[7:])
+    post = service.get_post_message(index=index)
+    await bot.edit_message_text(
+        chat_id=callback_query.from_user.id,
+        message_id=callback_query.message.message_id,
+        text=post,
+        parse_mode="HTML"
+    )
+    await bot.edit_message_reply_markup(
+        chat_id=callback_query.from_user.id,
+        message_id=callback_query.message.message_id,
+        reply_markup=bk.get_ik_post(index)
     )
 
 
-@dp.callback_query_handler(lambda c: c.data in ["1Posted", "2Posted", "3Posted"])
+@dp.callback_query_handler(lambda c: "posted" in c.data)
 async def post_sent(callback_query: types.CallbackQuery):
-    movie_index = int(callback_query.data[0])
-    service.update_movie_status(movie_index=movie_index, is_posted=True)
+    index = int(callback_query.data[6:])
+    service.set_movie_status_true(movie_index=index)
     await bot.answer_callback_query(callback_query.id)
     await bot.edit_message_reply_markup(
         chat_id=callback_query.from_user.id,
         message_id=callback_query.message.message_id,
-        reply_markup=bk.ik_posted
+        reply_markup=bk.get_ik_post(index, True)
     )
 
 

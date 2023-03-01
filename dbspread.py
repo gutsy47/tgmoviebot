@@ -62,39 +62,40 @@ class Service:
                 amount += 1
         return amount
 
-    def get_post_message(self, amount: int = 1):
+    def get_post_message(self, index: int = 0):
         template = self.get_post_template()
-        result = []
+        i = 0
+        post = "Nothing to show"
         for movie in self.__movies:
             if movie["isPosted"]:
                 continue
 
-            post = template\
-                .replace("name", movie["name"])\
-                .replace("year", movie["year"])\
-                .replace("time", movie["time"])\
-                .replace("score", movie["score"])\
-                .replace("genres", ", ".join(movie["genres"]))\
-                .replace("description", movie["description"])
+            if i == index:
+                post = template \
+                    .replace("name", movie["name"]) \
+                    .replace("year", movie["year"]) \
+                    .replace("time", movie["time"]) \
+                    .replace("score", movie["score"]) \
+                    .replace("genres", ", ".join(movie["genres"])) \
+                    .replace("description", movie["description"])
 
-            result.append(post)
-            if len(result) == amount:
-                break
+            i += 1
 
-        return result
+        return post
 
-    def update_movie_status(self, movie_index: int = 1, is_posted: bool = True):
+    def set_movie_status_true(self, movie_index: int = 0):
         row = 2  # Row in table
         index = 0  # Index in not posted movies
         for movie in self.__movies:
             row += 1
             if movie["isPosted"]:
                 continue
-            index += 1
             if movie_index == index:
                 worksheet = self.__spreadsheet.worksheet(title="БД Фильмов")
-                worksheet.update_cell(row, 2, is_posted)
+                worksheet.update_cell(row, 2, True)
                 break
+            index += 1
         else:
             return "No such movie"
+        self.__get_movies_db()
         return movie["name"]
