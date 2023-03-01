@@ -20,7 +20,7 @@ dp = Dispatcher(bot, storage=storage)
 service = Service()
 
 # Template keywords
-keywords = ["name", "year", "time", "score", "genres", "description"]
+keywords = ["name", "year", "time"]
 
 
 # Template updater form
