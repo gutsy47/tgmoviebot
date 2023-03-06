@@ -8,6 +8,7 @@ from aiogram.types import ChatActions
 
 import botkeyboards as bk
 from dbspread import Service
+from movieparser import FilmRu
 
 
 # Init the bot
@@ -26,6 +27,11 @@ keywords = ["name", "year", "time"]
 # Template updater form
 class TemplateForm(StatesGroup):
     template = State()
+
+
+# Find movie form
+class MovieForm(StatesGroup):
+    request = State()
 
 
 @dp.message_handler(commands=['start'])
@@ -60,6 +66,85 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     # Cancel state and inform user about it
     await state.finish()
     await message.reply("Действие отменено", reply_markup=bk.rk_main)
+
+
+# ADD MOVIE START
+@dp.message_handler(commands=["find_movie"])
+@dp.message_handler(Text(equals="🔍 Найти фильм"))
+async def find_movie(message: types.Message):
+    await message.answer(
+        text="Введите название фильма",
+        reply_markup=bk.rk_cancel
+    )
+    await MovieForm.request.set()
+
+
+@dp.message_handler(state=MovieForm.request)
+async def process_find_movie(message: types.Message, state: FSMContext):
+    await message.answer_chat_action(ChatActions.TYPING)
+    movie: FilmRu = FilmRu(message.text)
+
+    if not movie.name:
+        await message.reply(
+            "Фильм не найден",
+            reply_markup=bk.rk_main
+        )
+        await state.finish()
+    else:
+        await message.reply_photo(
+            photo=movie.poster,
+            caption=f"<a href=\"{movie.link}\">{movie.name}</a>\nТы ищешь этот фильм?",
+            reply_markup=bk.ik_is_right_movie,
+            parse_mode="HTML"
+        )
+        await state.update_data(movie=movie)
+
+
+@dp.callback_query_handler(lambda c: c.data == "rightMovie", state=MovieForm.request)
+async def movie_found(callback_query: types.CallbackQuery, state: FSMContext):
+    # Add to the DB...
+    await bot.answer_callback_query(callback_query.id)
+
+
+@dp.callback_query_handler(lambda c: c.data == "wrongMovie", state=MovieForm.request)
+async def movie_not_found(callback_query: types.CallbackQuery, state: FSMContext):
+    movie: FilmRu = (await state.get_data())["movie"]
+    movie.set_next_movie()
+
+    await bot.answer_callback_query(callback_query.id)
+
+    if not movie.name:
+        await bot.delete_message(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+        )
+        await bot.send_message(
+            chat_id=callback_query.from_user.id,
+            text="Результаты закончились, фильм не найден",
+            reply_markup=bk.rk_main
+        )
+        await state.finish()
+    else:
+        await bot.edit_message_media(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            media=types.input_media.InputMediaPhoto(movie.poster)
+        )
+        await bot.edit_message_caption(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            caption=f"<a href=\"{movie.link}\">{movie.name}</a>\nТы ищешь этот фильм?",
+            parse_mode="HTML"
+        )
+        await bot.edit_message_reply_markup(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            reply_markup=bk.ik_is_right_movie
+        )
+        await state.update_data(movie=movie)
+
+
+# ADD MOVIE END
 
 
 # GET POST START
