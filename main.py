@@ -40,8 +40,9 @@ async def send_welcome(message: types.Message):
     await message.reply(
         "<b>Hello, world!</b>\n"
         "Я тут за главного в свопе. Команды две:\n"
-        "⚙️ Шаблон поста - Посмотреть/изменить текущий шаблон поста\n"
-        "🖌 Получить пост  - Из GТаблицы бот сформирует пост (если в бд есть данные)",
+        "🖌 Получить пост  - Из БД бот сформирует пост (если есть данные)\n"
+        "🔍 Найти фильм - Поиск фильма на film.ru\n"
+        "⚙️ Шаблон поста - Посмотреть текущий шаблон поста",
         parse_mode="HTML",
         reply_markup=bk.rk_main
     )
@@ -158,27 +159,31 @@ async def get_post(message: types.Message):
         f"<b>Не выложенных постов:</b> {amount}",
         parse_mode="HTML",
     )
-    await message.answer(
-        post,
-        parse_mode="HTML",
-        reply_markup=bk.get_ik_post(index=0)
-    )
+    if amount > 0:
+        await message.answer(
+            post,
+            parse_mode="HTML",
+            reply_markup=bk.get_ik_post(index=0)
+        )
 
 
 @dp.callback_query_handler(lambda c: "newPost" in c.data)
 async def change_post(callback_query: types.CallbackQuery):
     index = int(callback_query.data[7:])
     post = service.get_post_message(index=index)
+    next_post = service.get_post_message(index=index+1)
+
     await bot.edit_message_text(
         chat_id=callback_query.from_user.id,
         message_id=callback_query.message.message_id,
         text=post,
         parse_mode="HTML"
     )
+    is_last = True if not next_post else False
     await bot.edit_message_reply_markup(
         chat_id=callback_query.from_user.id,
         message_id=callback_query.message.message_id,
-        reply_markup=bk.get_ik_post(index)
+        reply_markup=bk.get_ik_post(index, is_last=is_last)
     )
 
 

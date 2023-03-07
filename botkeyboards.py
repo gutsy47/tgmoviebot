@@ -18,11 +18,12 @@ ik_template.add(
 )
 
 
-def get_ik_post(index: int = 0, is_posted: bool = False):
+def get_ik_post(index: int = 0, is_posted: bool = False, is_last: bool = False):
     ik_post = ik.InlineKeyboardMarkup(row_width=2)
     if index > 0:
         ik_post.add(ik.InlineKeyboardButton('◀️', callback_data=f"newPost{index-1}"))
-    ik_post.insert(ik.InlineKeyboardButton('▶️', callback_data=f"newPost{index+1}"))
+    if not is_last:
+        ik_post.insert(ik.InlineKeyboardButton('▶️', callback_data=f"newPost{index+1}"))
     if is_posted:
         ik_post.add(ik.InlineKeyboardButton("✅ Выложен", callback_data="Pass"))
     else:

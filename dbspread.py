@@ -1,6 +1,8 @@
 import os
 import gspread
 
+from movieparser import FilmRu
+
 
 class Service:
     def __init__(self):
@@ -30,7 +32,7 @@ class Service:
 
     def __get_movies_db(self):
         worksheet = self.__spreadsheet.worksheet(title="БД Фильмов")
-        values = worksheet.get_all_values()[2:]
+        values = worksheet.get_all_values()[1:]
         self.__movies = []
         for row in values:
             if not row[0]:
@@ -65,7 +67,7 @@ class Service:
     def get_post_message(self, index: int = 0):
         template = self.get_post_template()
         i = 0
-        post = "Nothing to show"
+        post = None
         for movie in self.__movies:
             if movie["isPosted"]:
                 continue
@@ -84,7 +86,7 @@ class Service:
         return post
 
     def set_movie_status_true(self, movie_index: int = 0):
-        row = 2  # Row in table
+        row = 1  # Row in table
         index = 0  # Index in not posted movies
         for movie in self.__movies:
             row += 1
