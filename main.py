@@ -163,7 +163,20 @@ async def movie_not_found(callback_query: types.CallbackQuery, state: FSMContext
 
 @dp.callback_query_handler(lambda c: c.data == "foundToPost")
 async def found_to_post(callback_query: types.CallbackQuery):
-    pass
+    post = service.get_last_post()
+    service.set_last_movie_status_true()
+    await callback_query.answer()
+    await bot.delete_message(
+        chat_id=callback_query.from_user.id,
+        message_id=callback_query.message.message_id
+    )
+    await bot.send_message(
+        chat_id=callback_query.from_user.id,
+        text=post,
+        parse_mode="HTML",
+        reply_markup=bk.ik_found_is_posted
+    )
+
 
 # ADD MOVIE END
 

@@ -86,6 +86,22 @@ class Service:
 
         return post
 
+    def get_last_post(self):
+        template = self.get_post_template()
+        movie = self.__movies[-1]
+        return template \
+            .replace("name", movie["name"]) \
+            .replace("year", movie["year"]) \
+            .replace("time", movie["time"]) \
+            .replace("score", movie["score"]) \
+            .replace("genres", ", ".join(movie["genres"])) \
+            .replace("description", movie["description"])
+
+    def set_last_movie_status_true(self):
+        worksheet = self.__spreadsheet.worksheet(title="БД Фильмов")
+        worksheet.update_cell(len(self.__movies)+1, 2, True)
+        self.__get_movies_db()
+
     def add_movie(self, movie: FilmRu):
         worksheet = self.__spreadsheet.worksheet(title="БД Фильмов")
         time = movie.time.split(':')

@@ -39,6 +39,8 @@ ik_is_right_movie.add(
 
 ik_found_to_post = ik.InlineKeyboardMarkup(row_width=1)
 ik_found_to_post.add(
-    ik.InlineKeyboardButton("📌 Получить пост", callback_data="foundToPost"),
+    ik.InlineKeyboardButton("📌 Выложить", callback_data="foundToPost"),
 )
 
+ik_found_is_posted = ik.InlineKeyboardMarkup(row_width=1)
+ik_found_is_posted.add(ik.InlineKeyboardButton("✅ Выложен", callback_data="Pass"))
