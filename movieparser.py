@@ -13,15 +13,13 @@ class FilmRu:
         self.link = None
         self.name = None
         self.poster = None
+        self.year = None
+        self.time = None
+        self.rating = None
+        self.genres = None
         if self.query:
             self.link, self.name, self.poster = self.query.pop(0)
-
-            # Data from the movie's page
-            details = self.get_details()
-            self.year = details["year"]
-            self.time = details["time"]
-            self.rating = details["rating"]
-            self.genres = details["genres"]
+            self.__update_details()
 
     @staticmethod
     def get_query(request):
@@ -54,15 +52,9 @@ class FilmRu:
             return
 
         self.link, self.name, self.poster = self.query.pop(0)
+        self.__update_details()
 
-        # Update details
-        details = self.get_details()
-        self.year = details["year"]
-        self.time = details["time"]
-        self.rating = details["rating"]
-        self.genres = details["genres"]
-
-    def get_details(self):
+    def __update_details(self):
         """Gets all the required data from the movie's link"""
         details = {}
 
@@ -74,23 +66,7 @@ class FilmRu:
         details["time"] = soup.find("strong", {"itemprop": "duration"}).attrs["content"][4:9]
         details["rating"] = soup.find("strong", {"id": "movie_rate"}).text.strip().split()[0]
 
-        return details
-
-
-if __name__ == '__main__':
-    film = FilmRu("афывкцук")
-    print(film.name, film.poster)
-    # search_films = [
-    #     "Отель «Гранд Будапешт»", "Начало", "Враг государства", "Предел риска", "Игра на понижение",
-    #     "Паразиты", "Назови меня своим именем", "Основной инстинкт", "Помни", "Форрест Гамп", "Никто",
-    #     "Апгрейд", "Терминал", "Бегущий по лезвию 2049", "Самый быстрый Indian", "Серый человек"
-    # ]
-    # for film_name in search_films:
-    #     film = FilmRu(film_name)
-    #     for _ in range(len(film.query)):
-    #         print(film.name, film.link, film.poster)
-    #         isRight = input("y/n: ")
-    #         if isRight == "n":
-    #             film.set_next_movie()
-    #         else:
-    #             break
+        self.year = int(details["year"])
+        self.time = details["time"]
+        self.rating = float(details["rating"]) if details["rating"] != '-' else 0
+        self.genres = details["genres"]

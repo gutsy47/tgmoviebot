@@ -21,6 +21,7 @@ class Service:
         account = gspread.service_account_from_dict(credentials)
         self.__spreadsheet = account.open("Bot data")
         self.__movies = []
+        self.__get_movies_db()
 
     def get_post_template(self):
         worksheet = self.__spreadsheet.worksheet(title="Шаблон поста")
@@ -84,6 +85,17 @@ class Service:
             i += 1
 
         return post
+
+    def add_movie(self, movie: FilmRu):
+        worksheet = self.__spreadsheet.worksheet(title="БД Фильмов")
+        time = movie.time.split(':')
+        time = f"{int(time[0])} ч {time[1]} мин"
+        values = [
+            [movie.name, False, movie.year, time, movie.rating, ", ".join(movie.genres)]
+        ]
+        row = len(self.__movies)+2
+        worksheet.update(f"A{row}:F{row}", values)
+        self.__get_movies_db()
 
     def set_movie_status_true(self, movie_index: int = 0):
         row = 1  # Row in table

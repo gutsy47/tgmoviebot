@@ -103,8 +103,24 @@ async def process_find_movie(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(lambda c: c.data == "rightMovie", state=MovieForm.request)
 async def movie_found(callback_query: types.CallbackQuery, state: FSMContext):
-    # Add to the DB...
+    movie: FilmRu = (await state.get_data())["movie"]
+    service.add_movie(movie)
+
     await bot.answer_callback_query(callback_query.id)
+
+    await bot.edit_message_caption(
+        chat_id=callback_query.from_user.id,
+        message_id=callback_query.message.message_id,
+        caption=f"<a href=\"{movie.link}\">{movie.name}</a>\n"
+                f"Нажми кнопку чтобы получить пост по этому фильму",
+        parse_mode="HTML"
+    )
+    await bot.edit_message_reply_markup(
+        chat_id=callback_query.from_user.id,
+        message_id=callback_query.message.message_id,
+        reply_markup=bk.ik_found_to_post
+    )
+    await state.finish()
 
 
 @dp.callback_query_handler(lambda c: c.data == "wrongMovie", state=MovieForm.request)
@@ -144,6 +160,10 @@ async def movie_not_found(callback_query: types.CallbackQuery, state: FSMContext
         )
         await state.update_data(movie=movie)
 
+
+@dp.callback_query_handler(lambda c: c.data == "foundToPost")
+async def found_to_post(callback_query: types.CallbackQuery):
+    pass
 
 # ADD MOVIE END
 
